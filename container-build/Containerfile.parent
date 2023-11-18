@@ -11,28 +11,15 @@ RUN   yum install -y --nodocs --disableplugin=subscription-manager httpd && \
       echo "Hello from the httpd-parent container!" > ${DOCROOT}/index.html
 
 # Allows child images to inject their own content into DocumentRoot
-ONBUILD COPY src/ /opt/app-root
+ONBUILD COPY src/ ${DOCROOT}/
 
-
-EXPOSE 8080
-
-LABEL io.openshift.expose-services="8080:http"
-
-RUN sed -i "s/Listen 80/Listen 8080/g" /etc/httpd/conf/httpd.conf && sed -i "s/#ServerName www.example.com:80/ServerName 0.0.0.0:8080/g" /etc/httpd/conf/httpd.conf
-
-RUN chgrp 0 /var/log/httpd /var/run/httpd && chmod g=u /var/log/httpd /var/run/httpd
-COPY aaa ${DOCROOT}
-ADD  bbb ${DOCROOT}
-
-USER 1001
-
-#EXPOSE 80
+EXPOSE 80
 
 # This stuff is needed to ensure a clean start
-#RUN rm -rf /run/httpd && mkdir /run/httpd
+RUN rm -rf /run/httpd && mkdir /run/httpd
 
 # Run as the root user
-# USER root
+USER root
 
 # Launch httpd
 CMD /usr/sbin/httpd -DFOREGROUND

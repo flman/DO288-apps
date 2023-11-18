@@ -1,10 +1,33 @@
 #!/bin/bash
-echo "Making pre-invocation changes..."
-/usr/libexec/s2i/assemble
-rc=$?
-if [ $rc -eq 0 ]; then
-    echo "Test wrapper" >> ./info.html
+
+set -e
+
+source ${HTTPD_CONTAINER_SCRIPTS_PATH}/common.sh
+
+echo "---> Enabling s2i support in httpd24 image"
+
+config_s2i
+
+######## CUSTOMIZATION STARTS HERE ############
+
+
+######## CUSTOMIZATION ENDS HERE ############
+
+if [ -d ./httpd-cfg ]; then
+  echo "---> Copying httpd configuration files..."
+  if [ "$(ls -A ./httpd-cfg/*.conf)" ]; then
+    cp -v ./httpd-cfg/*.conf "${HTTPD_CONFIGURATION_PATH}"
+    rm -rf ./httpd-cfg
+  fi
 else
-    echo "Error: assemble failed!"
+  if [ -d ./cfg ]; then
+    echo "---> Copying httpd configuration files from deprecated './cfg' directory, use './httpd-cfg' instead..."
+    if [ "$(ls -A ./cfg/*.conf)" ]; then
+      cp -v ./cfg/*.conf "${HTTPD_CONFIGURATION_PATH}"
+      rm -rf ./cfg
+    fi
+  fi
 fi
-exit $rc
+
+# Fix source directory permissions
+fix-permissions ./
